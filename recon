@@ -65,10 +65,6 @@ case $1 in
 	if [[ -f config && ! -f /var/run/recon.pid ]]; then
 #		echo $ATTACK $SECURITY > testfile.txt
 		echo $$ > /var/run/recon.pid
-		#while true; do
-                #	echo "mars" > testfile.txt
-                #	sleep 1000
-        	#done
 
 		if [[ ! -f /var/run/airodump.pid ]]; then
 			if [[ $ATTACK -eq "passive" ]]; then
@@ -101,7 +97,6 @@ case $1 in
 
 	echo "Recon has been stopped, will run the setup in next boot!"
 
-	touch /root/.hackberry/removn00bb00n
   ;;
   reload)
 	#start setup
