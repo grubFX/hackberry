@@ -19,8 +19,6 @@
 
 DIR=/root/.hackberry
 
-#reading config
-
 while read line
 do
     NAME=$(echo $line | cut -d "=" -f1)
@@ -39,23 +37,6 @@ do
     esac
 done < $DIR/config
 
-
-#echo "attack:           $ATTACK"
-#echo "type:             $SECURITY"
-#echo "bssid:            $BSSID"
-#echo "essid:            $ESSID"
-#echo "freq:             $FREQ"
-#echo "2.4chan:  	$CHANNEL2"
-#echo "5chan:            $CHANNEL5"
-#echo "server:          $SERVER"
-#echo "cap.dur.: 	$CAPDUR"
-
-#check if not empty
-#if [[ $CAPDUR ]]; then
-#  echo "wos drinnan"
-#fi
-
-
 if [[ -z $1 ]]; then
 	/etc/init.d/recon start
 else
@@ -63,7 +44,6 @@ case $1 in
   start)
 	cd /root/.hackberry
 	if [[ -f config && ! -f /var/run/recon.pid ]]; then
-#		echo $ATTACK $SECURITY > testfile.txt
 		echo $$ > /var/run/recon.pid
 
 		if [[ ! -f /var/run/airodump.pid ]]; then
@@ -80,6 +60,7 @@ case $1 in
 	elif [ -f /var/run/recon.pid ]; then
 		echo "Recon is already running!"
 	fi
+
   ;;
   stop)
 	#delete config file / boot in setup next time
@@ -101,51 +82,55 @@ case $1 in
   reload)
 	#start setup
 	if [ -f /var/run/recon.pid ]; then
-                kill -9  $(cat /var/run/recon.pid)
+    kill -9  $(cat /var/run/recon.pid)
 		rm /var/run/recon.pid
-        fi
+  fi
 
 	if [ -f /var/run/airodump.pid ]; then
-                kill -9  $(cat /var/run/airodump.pid)
+    kill -9  $(cat /var/run/airodump.pid)
 		rm /var/run/airodump.pid
-        fi
+  fi
 
 	#$DIR./setup
 	cd $DIR
 	./setup.sh
 	cd /etc/init.d/
 	/etc/init.d/recon start
+
   ;;
   status)
 	#some status
 	if [ -f /var/run/recon.pid ]; then
-                echo "Recon is running on PID: $(cat /var/run/recon.pid)"
-        else
-		echo "Recon is not running!"
+    echo "Recon is running on PID: $(cat /var/run/recon.pid)"
+  else
+    echo "Recon is not running!"
 	fi
 
 	if [ -f /var/run/airodump.pid ]; then
-                echo "airodump-ng is running on PID: $(cat /var/run/airodump.pid)"
-        else
+    echo "airodump-ng is running on PID: $(cat /var/run/airodump.pid)"
+  else
 		echo "airodump-ng is not running!"
 	fi
   ;;
   restart|force-reload)
-	#restart the shit
+
+  #restart the shit
 	echo "Restarting recon!"
 	if [ -f /var/run/recon.pid ]; then
-                kill -9  $(cat /var/run/recon.pid)
+    kill -9  $(cat /var/run/recon.pid)
 		rm /var/run/recon.pid
-        fi
+  fi
 
 	if [ -f /var/run/airodump.pid ]; then
-                kill -9  $(cat /var/run/airodump.pid)
+    kill -9  $(cat /var/run/airodump.pid)
 		rm /var/run/airodump.pid
-        fi
-	/etc/init.d/recon start
+  fi
+
+  /etc/init.d/recon start
+
   ;;
   *)
-        #echo "wrong usage"
+    #echo "wrong usage"
   ;;
 esac
 fi
