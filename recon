@@ -1,0 +1,158 @@
+#!/bin/bash
+### BEGIN INIT INFO
+# Provides: transparentproxy
+# Required-Start:    $local_fs $syslog $remote_fs dbus
+# Required-Stop:     $local_fs $syslog $remote_fs
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start transparentproxy
+### END INIT INFO
+# name: recon
+# author: David Staffenberger / Felix Gruber
+# version: 0.1
+#
+### begin summary ###
+# This script is meant for the "Hackberrry" software
+# and is used to start the attacks according to the created
+# .config file created with the setup script
+### end summary ###
+
+DIR=/root/.hackberry
+
+#reading config
+
+while read line
+do
+    NAME=$(echo $line | cut -d "=" -f1)
+    CONTENT=$(echo $line | cut -d "=" -f2)
+
+    case $NAME in
+      ATTACK) ATTACK=$CONTENT;;
+      SECURITY) SECURITY=$CONTENT;;
+      BSSID) BSSID=$CONTENT;;
+      ESSID) ESSID=$CONTENT;;
+      FREQ) FREQ=$CONTENT;;
+      CHANNEL2) CHANNEL2=$CONTENT;;
+      CHANNEL5) CHANNEL5=$CONTENT;;
+      SERVER) SERVER=$CONTENT;;
+      CAPDUR) CAPDUR=$CONTENT;;
+    esac
+done < $DIR/config
+
+
+#echo "attack:           $ATTACK"
+#echo "type:             $SECURITY"
+#echo "bssid:            $BSSID"
+#echo "essid:            $ESSID"
+#echo "freq:             $FREQ"
+#echo "2.4chan:  	$CHANNEL2"
+#echo "5chan:            $CHANNEL5"
+#echo "server:          $SERVER"
+#echo "cap.dur.: 	$CAPDUR"
+
+#check if not empty
+#if [[ $CAPDUR ]]; then
+#  echo "wos drinnan"
+#fi
+
+
+if [[ -z $1 ]]; then
+	/etc/init.d/recon start
+else
+case $1 in
+  start)
+	cd /root/.hackberry
+	if [[ -f config && ! -f /var/run/recon.pid ]]; then
+#		echo $ATTACK $SECURITY > testfile.txt
+		echo $$ > /var/run/recon.pid
+		#while true; do
+                #	echo "mars" > testfile.txt
+                #	sleep 1000
+        	#done
+
+		if [[ ! -f /var/run/airodump.pid ]]; then
+			if [[ $ATTACK -eq "passive" ]]; then
+				airmon-ng check kill &> /dev/null
+				airmon-ng start wlx00c0ca8ade43 &> /dev/null
+				airodump-ng -w /root/.hackberry/dump -b abg wlx00c0ca8ade43 &
+				echo $! > /var/run/airodump.pid
+			fi
+		else
+			echo "capturing is already running!"
+		fi
+
+	elif [ -f /var/run/recon.pid ]; then
+		echo "Recon is already running!"
+	fi
+  ;;
+  stop)
+	#delete config file / boot in setup next time
+	if [ -f /var/run/recon.pid ]; then
+		kill -9  $(cat /var/run/recon.pid)
+		rm /var/run/recon.pid
+	fi
+
+	if [ -f /var/run/airodump.pid ]; then
+		kill -9  $(cat /var/run/airodump.pid)
+		rm /var/run/airodump.pid
+	fi
+
+	#rm $DIR/config 2> /dev/null
+
+	echo "Recon has been stopped, will run the setup in next boot!"
+
+	touch /root/.hackberry/removn00bb00n
+  ;;
+  reload)
+	#start setup
+	if [ -f /var/run/recon.pid ]; then
+                kill -9  $(cat /var/run/recon.pid)
+		rm /var/run/recon.pid
+        fi
+
+	if [ -f /var/run/airodump.pid ]; then
+                kill -9  $(cat /var/run/airodump.pid)
+		rm /var/run/airodump.pid
+        fi
+
+	#$DIR./setup
+	cd $DIR
+	./setup.sh
+	cd /etc/init.d/
+	/etc/init.d/recon start
+  ;;
+  status)
+	#some status
+	if [ -f /var/run/recon.pid ]; then
+                echo "Recon is running on PID: $(cat /var/run/recon.pid)"
+        else
+		echo "Recon is not running!"
+	fi
+
+	if [ -f /var/run/airodump.pid ]; then
+                echo "airodump-ng is running on PID: $(cat /var/run/airodump.pid)"
+        else
+		echo "airodump-ng is not running!"
+	fi
+  ;;
+  restart|force-reload)
+	#restart the shit
+	echo "Restarting recon!"
+	if [ -f /var/run/recon.pid ]; then
+                kill -9  $(cat /var/run/recon.pid)
+		rm /var/run/recon.pid
+        fi
+
+	if [ -f /var/run/airodump.pid ]; then
+                kill -9  $(cat /var/run/airodump.pid)
+		rm /var/run/airodump.pid
+        fi
+	/etc/init.d/recon start
+  ;;
+  *)
+        #echo "wrong usage"
+  ;;
+esac
+fi
+
+exit 0

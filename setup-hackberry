@@ -1,0 +1,209 @@
+#!/bin/bash
+# name: setup
+# author: David Staffenberger / Felix Gruber
+# version: 0.1
+#
+### begin summary ###
+# This script is meant for the "Hackberry" software
+# and is used to setup the Hackberry to generate the config
+# file which is used to run instructions in the recon mode
+### end summary ###
+
+DIR=/root/.hackberry
+mkdir -p $DIR
+cd $DIR
+
+number_reg="^[0-9]+$"
+
+##active or passive
+while true; do
+  read -p "Active or Passive attack?[a/P]" ap
+
+  case $ap in
+    [aA]* ) ACTIVE=true; break;;
+    *) ACTIVE=false; break;;
+  esac
+done
+
+if [[ $ACTIVE == true ]]; then
+  #set configs for active attacks
+  ATTACK="active"
+
+else
+  # set configs for passive attacks
+
+  ATTACK="passive"
+  #get cap duration
+
+  while true; do
+   read -p "caption duration in hours:" dur
+
+  # if [[ ($number_reg =~ $dur) && ($dur > 0) ]]; then
+   if [[ ($dur > 0) ]]; then
+     DURATION=$dur
+     break;
+   else
+     >2& echo "Given value must be greater than 0!"
+   fi
+  done
+fi
+
+#general settings
+
+
+#ask if auto save on server
+while true; do
+  read -p "Auto save on server (CAUTION, security risk)?[y/N]" yn
+
+  case $yn in
+    [yY]* ) AUTOSAVE=true; break;;
+    *) AUTOSAVE=false; break;;
+  esac
+done
+
+echo "Autosave: $AUTOSAVE"
+
+#ask for server IP
+if [[ $AUTOSAVE == true  ]]; then
+  echo "Server IP: "
+  read -p "must be a valid IP! errors are not checked" ip
+  SERVER_IP=$ip;
+
+  #not yet implemented
+
+  #echo "Public Key:"
+  #read -p "must be a valid Key for your server (absolute path)" path
+  #PKEY=$path
+fi
+
+ #security standards
+ echo "What kind of security standards do you want to attack?"
+
+ select ap in "ALL" "WEP" "WPA" "WPS"; do
+
+   case $ap in
+    ALL ) SECURITY="ALL"; break;;
+    WEP ) SECURITY="WEP"; break;;
+    WPA ) SECURITY="WPA"; break;;
+    WPS ) SECURITY "WPS"; break;;
+  esac
+  break;
+ done
+
+
+#network information
+  while true; do
+    read -p "Do you want to attack a specific network?[y/N]" yn
+
+    case $yn in
+      [yY]* ) SPECIFIC=true; break;;
+      *) SPECIFIC=false; break;;
+    esac
+  done
+
+  if [[ $SPECIFIC == true  ]]; then
+    echo "BSSID|ESSID - one of them must be set!"
+
+    while true; do
+      read -p "BSSID: " BSSID
+      read -p "ESSID: " ESSID
+
+      if [[ (-z $BSSID) && (-z $ESSID) ]]; then
+        echo "one of the values must be set!"
+      else
+        break;
+      fi
+    done
+  fi
+
+
+#channel information
+echo "On which frequency do you want to attack?"
+select ap in "ALL" "2GHz" "5GHz"; do
+
+  case $ap in
+    ALL ) FREQ="ALL"; break;;
+    2GHz ) FREQ="2"; break;;
+    5GHz ) FREQ="5"; break;;
+ esac
+ break;
+done
+
+#get channels
+#f [[ $FREQ == "ALL" ]]; then
+#  CHANNEL2 = "ALL"
+#  CHANNEL5 = "ALL"
+
+if [[ ($FREQ == "2") || ($FREQ == "ALL") ]]; then
+  echo "Which channel for the 2.4GHz band?"
+  select b in "1-14" "ALL"; do
+    case $b in
+      1-14 )
+        while true; do
+          read -p "Which channel do you want to use in the 2GHz band [1-14]?" band
+
+               echo $band
+
+          if [[ ($band -ge "1") && ($band -le "14") ]]; then
+            CHANNEL2=$band
+            break
+          else
+            echo "Channel must be between 1 and 14!"
+          fi
+        done
+        break;;
+      ALL )
+        CHANNEL2="ALL"
+        break;;
+    esac
+    #break;;
+  done
+fi
+
+
+if [[ ($FREQ == "5") || ($FREQ == "ALL") ]]; then
+  echo "Which channel for the 5GHz band?"
+  select b in "40-102" "ALL"; do
+    case $b in
+      40-102 )
+        while true; do
+          read -p "Which channel do you want to use in the 5GHz band [40-102]?" band
+
+          if [[ ($band -ge 40) && ($band -le 102) ]]; then
+            CHANNEL5=$band
+            break
+          else
+            echo "Channel must be between 40 and 102!"
+          fi
+        done
+        break;;
+      ALL )
+        CHANNEL2="ALL"
+        break;;
+    esac
+  done
+fi
+
+ #write into config file
+
+ rm config 2> /dev/null
+ touch config
+
+echo "ATTACK=$ATTACK" >> config
+echo "SECURITY=$SECURITY" >> config
+echo "BSSID=$BSSID" >> config
+echo "ESSID=$ESSID" >> config
+echo "FREQ=$FREQ" >> config
+echo "CHANNEL2=$CHANNEL2" >>  config
+echo "CHANNEL5=$CHANNEL5" >>  config
+echo "SERVER=$SERVER_IP" >>  config
+echo "CAPDUR=$DURATION" >>  config
+
+echo "Config file was created!"
+
+#from now boot in recon
+#read -p "Do you want to start in RECON for the next boot operations? [Y/n]" boot
+
+#case $boot in
+#  [Nn] )
+#esac
