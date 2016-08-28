@@ -49,7 +49,7 @@ case $1 in
 		if [[ ! -f /var/run/airodump.pid ]]; then
 			if [[ $ATTACK -eq "passive" ]]; then
 				airmon-ng check kill &> /dev/null
-				airmon-ng start wlx00c0ca8ade43 &> /dev/null
+ü				airmon-ng start wlx00c0ca8ade43 &> /dev/null
 				airodump-ng -w /root/.hackberry/dump -b abg wlx00c0ca8ade43 &
 				echo $! > /var/run/airodump.pid
 			fi
@@ -92,9 +92,7 @@ case $1 in
   fi
 
 	#$DIR./setup
-	cd $DIR
-	./setup.sh
-	cd /etc/init.d/
+	/bin/setup-hackberry
 	/etc/init.d/recon start
 
   ;;
